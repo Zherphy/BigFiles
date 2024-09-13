@@ -7,4 +7,4 @@ require (
 	github.com/metalogical/BigFiles v0.0.0-20201031233020-8aa76a58aba7
 )
 
-replace github.com/metalogical/BigFiles => /root/work/lfs-server/BigFiles
+replace github.com/metalogical/BigFiles => /home/z30067395/BigFiles

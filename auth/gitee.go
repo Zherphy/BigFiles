@@ -39,6 +39,23 @@ type AccessToken struct {
 	Token string `json:"access_token"`
 }
 
+type RepoInfo struct {
+	Id        int           `json:"id"`
+	Namespace RepoNameSpace `json:"namespace"`
+	Path      string        `json:"path"`
+	Name      string        `json:"name"`
+	Parent    *RepoInfo     `json:"parent,omitempty"`
+}
+
+type RepoNameSpace struct {
+	Id      int            `json:"id"`
+	Type    string         `json:"type"`
+	Name    string         `json:"name"`
+	Path    string         `json:"path"`
+	HtmlUrl string         `json:"html_url"`
+	Parent  *RepoNameSpace `json:"parent,omitempty"`
+}
+
 func Init(cfg *config.Config) error {
 	client_id = cfg.ClientId
 	if client_id == "" {
@@ -66,7 +83,10 @@ func GiteeAuth() func(UserInRepo) error {
 		} else {
 			userInRepo.Token = token
 		}
-
+		err = verifyRepo(userInRepo)
+		if err != nil {
+			return err
+		}
 		return verifyUser(userInRepo)
 	}
 }
@@ -156,4 +176,53 @@ func verifyUser(userInRepo UserInRepo) error {
 	} else {
 		return errors.New("unknow operation")
 	}
+}
+
+// verifyRepo verifies repo by access_token
+func verifyRepo(userInRepo UserInRepo) error {
+	path := fmt.Sprintf(
+		"https://gitee.com/api/v5/repos/%s/%s?access_token=%s",
+		userInRepo.Owner,
+		userInRepo.Repo,
+		userInRepo.Token,
+	)
+	req, err := http.NewRequest("GET", path, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return errors.New("invalid credentials")
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
+	var repoInfo RepoInfo
+	err = json.Unmarshal(body, &repoInfo)
+	if err != nil {
+		panic(err)
+	}
+	var topNameSpace RepoNameSpace
+	if repoInfo.Parent == nil {
+		topNameSpace = repoInfo.Namespace
+	} else {
+		currentInfo := repoInfo
+		var parentRepoInfo RepoInfo
+		for currentInfo.Parent != nil {
+			parentRepoInfo = *currentInfo.Parent
+			currentInfo = parentRepoInfo
+		}
+		topNameSpace = parentRepoInfo.Namespace
+	}
+	if topNameSpace.Parent.Name != "openEuler" {
+		return errors.New("repo is not in the openEuler community")
+	}
+	return nil
 }

@@ -6,21 +6,21 @@ jobs:
     name: Spell Check with Typos
     runs-on: self-hosted
     steps:
-    - name: Checkout Actions Repository
-      uses: actions/checkout@v4
+      - name: Checkout Actions Repository
+        uses: actions/checkout@v4
 
-    - name: Check spelling
-      uses: crate-ci/typos@master
-      with:
-        files: ./
+      - name: Check spelling
+        uses: crate-ci/typos@master
+        with:
+          files: ./
 
-    - name: Use custom config file
-      uses: crate-ci/typos@master
-      with:
-        files: ./
-        config: ./typos.toml
+      - name: Use custom config file
+        uses: crate-ci/typos@master
+        with:
+          files: ./
+          config: ./typos.toml
 
-    - name: Writes changes in the local checkout
-      uses: crate-ci/typos@master
-      with:
-        write_changes: true
+      - name: Writes changes in the local checkout
+        uses: crate-ci/typos@master
+        with:
+          write_changes: true

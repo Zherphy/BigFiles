@@ -1,11 +1,13 @@
 module github.com/metalogical/BigFiles/BigFiles
 
-go 1.15
+go 1.21
+
+toolchain go1.23.1
 
 require (
-	github.com/akrylysov/algnhsa v0.12.1
-	github.com/metalogical/BigFiles v0.0.0-20201031233020-8aa76a58aba7
+	github.com/akrylysov/algnhsa v1.1.0
+	github.com/metalogical/BigFiles v0.0.0-20201103191605-ca95c8c717cc
 	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/metalogical/BigFiles => github.com/opensourceways/BigFiles v0.0.0-20240913072808-2dbf11feb204
+replace github.com/metalogical/BigFiles => github.com/opensourceways/BigFiles v0.0.0-20240930093226-cec367139628

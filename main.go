@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/metalogical/BigFiles/server/ssh"
 	"log"
 	"net/http"
 	"os"
@@ -126,4 +127,15 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
+
+	//SSH SERVER
+	sshServer, err := ssh.NerSSHServer()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("ssh server on 0.0.0.0:23 ...")
+	if err := sshServer.ListenAndServe(); err != nil {
+		log.Fatalln(err)
+	}
+
 }

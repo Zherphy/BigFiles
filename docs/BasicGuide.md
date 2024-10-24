@@ -53,7 +53,7 @@ Git LFS initialized.
 
 ```
 [lfs]
-　　  url = https://openeuler-bigfiles.test.osinfra.cn/{owner}/{repo}
+    url = https://openeuler-bigfiles.test.osinfra.cn/{owner}/{repo}
 ```
 
 - 或者通过命令行设置仓库中LFS远程地址：

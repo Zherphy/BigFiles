@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/metalogical/BigFiles/auth"
@@ -123,18 +124,23 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	log.Println("serving on http://0.0.0.0:5000 ...")
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalln(err)
-	}
-
 	//SSH SERVER
 	sshServer, err := ssh.NerSSHServer()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("ssh server on 0.0.0.0:23 ...")
-	if err := sshServer.ListenAndServe(); err != nil {
+
+	lch := make(chan error, 1)
+	done := make(chan os.Signal, 1)
+	doneOnce := sync.OnceFunc(func() { close(done) })
+
+	go func() {
+		lch <- sshServer.Start()
+		doneOnce()
+	}()
+
+	log.Println("serving on http://0.0.0.0:5000 ...")
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
 

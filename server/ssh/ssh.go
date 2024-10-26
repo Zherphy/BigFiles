@@ -7,11 +7,9 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	gossh "golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"net"
-	"strconv"
 )
 
 var (
@@ -83,15 +81,5 @@ func (s *SSHServer) PublicKeyHandler(ctx ssh.Context, pk ssh.PublicKey) (allowed
 		return false
 	}
 
-	allowed = true
-	defer func(allowed *bool) {
-		publicKeyCounter.WithLabelValues(strconv.FormatBool(*allowed)).Inc()
-	}(&allowed)
-	perms := ctx.Permissions()
-
-	// Set the public key fingerprint to be used for authentication.
-	perms.Extensions["pubkey-fp"] = gossh.FingerprintSHA256(pk)
-	ctx.SetValue(ssh.ContextKeyPermissions, perms)
-
-	return
+	return true
 }

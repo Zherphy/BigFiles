@@ -75,11 +75,8 @@ func gitRunE(cmd *cobra.Command, args []string) error {
 }
 
 func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
-	session := sshutils.SessionFromContext(ctx)
-	pk := session.PublicKey()
 	pk1 := sshutils.PublicKeyFromContext(ctx)
 	log.Printf("处理git-lfs-authenticate /n")
-	log.Printf(pk.Type())
 	log.Printf(pk1.Type())
 	return nil
 }

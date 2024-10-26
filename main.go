@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/metalogical/BigFiles/server/ssh"
@@ -125,7 +126,8 @@ func main() {
 	}
 
 	//SSH SERVER
-	sshServer, err := ssh.NerSSHServer()
+	ctx := context.Background()
+	sshServer, err := ssh.NerSSHServer(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}

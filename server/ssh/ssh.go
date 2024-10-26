@@ -5,9 +5,22 @@ import (
 	"errors"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	gossh "golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"net"
+	"strconv"
+)
+
+var (
+	publicKeyCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "soft_serve",
+		Subsystem: "ssh",
+		Name:      "public_key_auth_total",
+		Help:      "The total number of public key auth requests",
+	}, []string{"allowed"})
 )
 
 type SSHServer struct {
@@ -15,9 +28,8 @@ type SSHServer struct {
 	ctx context.Context
 }
 
-func NerSSHServer() (*SSHServer, error) {
+func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 	var err error
-	ctx := context.Background()
 	s := &SSHServer{
 		ctx: ctx,
 	}
@@ -27,6 +39,7 @@ func NerSSHServer() (*SSHServer, error) {
 	}
 
 	opts := []ssh.Option{
+		ssh.PublicKeyAuth(s.PublicKeyHandler),
 		wish.WithMiddleware(mw...),
 	}
 	s.srv, err = wish.NewServer(opts...)
@@ -38,6 +51,7 @@ func NerSSHServer() (*SSHServer, error) {
 
 // ListenAndServe starts the SSH server.
 func (s *SSHServer) ListenAndServe() error {
+	s.srv.Addr = ":23231"
 	return s.srv.ListenAndServe()
 }
 
@@ -61,4 +75,23 @@ func (s *SSHServer) Start() error {
 		return nil
 	})
 	return nil
+}
+
+// PublicKeyAuthHandler handles public key authentication.
+func (s *SSHServer) PublicKeyHandler(ctx ssh.Context, pk ssh.PublicKey) (allowed bool) {
+	if pk == nil {
+		return false
+	}
+
+	allowed = true
+	defer func(allowed *bool) {
+		publicKeyCounter.WithLabelValues(strconv.FormatBool(*allowed)).Inc()
+	}(&allowed)
+	perms := ctx.Permissions()
+
+	// Set the public key fingerprint to be used for authentication.
+	perms.Extensions["pubkey-fp"] = gossh.FingerprintSHA256(pk)
+	ctx.SetValue(ssh.ContextKeyPermissions, perms)
+
+	return
 }

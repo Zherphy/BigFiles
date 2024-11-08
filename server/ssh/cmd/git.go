@@ -1,17 +1,17 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os/exec"
+	"time"
+
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/wish/git"
 	"github.com/metalogical/BigFiles/server/ssh/sshutils"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
-	"io"
-	"os/exec"
-	"time"
 )
 
 type Service string
@@ -88,15 +88,20 @@ func gitRunE(cmd *cobra.Command, args []string) error {
 func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 	pk1 := sshutils.PublicKeyFromContext(ctx)
 	log.Printf("处理git-lfs-authenticate /n")
-	log.Printf(pk1.Type())
+	server := sshutils.SSHServerFromContext(ctx)
+	log.Printf(server.Addr)
 	//给gitee发送ssh认证
 	cfg := &ssh.ClientConfig{
-		User:            "git",
+		User: "git",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(server.HostSigners[0]),
+		},
 		HostKeyCallback: ssh.FixedHostKey(pk1),
 	}
 	client, err := ssh.Dial("tcp", "gitee.com:22", cfg)
 	if err != nil {
 		log.Printf("failed to dial: %v", err)
+		return err
 	}
 	defer func(client *ssh.Client) {
 		err := client.Close()
@@ -105,31 +110,31 @@ func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 		}
 	}(client)
 
-	//创建一个SSH会话
-	session, err := client.NewSession()
-	if err != nil {
-		log.Printf("failed to create session: %v", err)
-	}
-	defer func(session *ssh.Session) {
-		err := session.Close()
-		if err != nil {
-			log.Printf("failed to close session: %v", err)
-		}
-	}(session)
+	// //创建一个SSH会话
+	// session, err := client.NewSession()
+	// if err != nil {
+	// 	log.Printf("failed to create session: %v", err)
+	// }
+	// defer func(session *ssh.Session) {
+	// 	err := session.Close()
+	// 	if err != nil {
+	// 		log.Printf("failed to close session: %v", err)
+	// 	}
+	// }(session)
 
-	// 设置会话的标准输出和标准错误输出为字节缓冲区，以便获取命令执行结果
-	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
-	session.Stdout = &stdoutBuf
-	session.Stderr = &stderrBuf
+	// // 设置会话的标准输出和标准错误输出为字节缓冲区，以便获取命令执行结果
+	// var stdoutBuf bytes.Buffer
+	// var stderrBuf bytes.Buffer
+	// session.Stdout = &stdoutBuf
+	// session.Stderr = &stderrBuf
 
-	// 执行指定的指令
-	err = session.Run("git-lfs-authenticate wj00037/lfs-test.git download")
-	if err != nil {
-		log.Printf("命令执行出错: %v", err)
-		log.Printf("标准错误输出: %s", stderrBuf.String())
-	}
-	// 输出命令执行的标准输出结果
-	log.Printf("标准输出: %s", stdoutBuf.String())
+	// // 执行指定的指令
+	// err = session.Run("git-lfs-authenticate wj00037/lfs-test.git download")
+	// if err != nil {
+	// 	log.Printf("命令执行出错: %v", err)
+	// 	log.Printf("标准错误输出: %s", stderrBuf.String())
+	// }
+	// // 输出命令执行的标准输出结果
+	// log.Printf("标准输出: %s", stdoutBuf.String())
 	return nil
 }

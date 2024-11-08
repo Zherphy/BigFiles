@@ -91,7 +91,10 @@ func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 	log.Printf(pk1.Type())
 	//给gitee发送ssh认证
 	cfg := &ssh.ClientConfig{
-		User:            "git",
+		User: "git",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(),
+		},
 		HostKeyCallback: ssh.FixedHostKey(pk1),
 	}
 	client, err := ssh.Dial("tcp", "gitee.com:22", cfg)

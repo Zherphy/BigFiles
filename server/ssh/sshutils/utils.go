@@ -25,3 +25,10 @@ func SessionFromContext(ctx context.Context) ssh.Session {
 	}
 	return nil
 }
+
+func SSHServerFromContext(ctx context.Context) *ssh.Server {
+	if server, ok := ctx.Value(ssh.ContextKeyServer).(*ssh.Server); ok {
+		return server
+	}
+	return nil
+}

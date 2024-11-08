@@ -27,7 +27,6 @@ type SSHServer struct {
 }
 
 func NerSSHServer(ctx context.Context) (*SSHServer, error) {
-	var err error
 	s := &SSHServer{
 		ctx: ctx,
 	}
@@ -40,9 +39,11 @@ func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 		ssh.PublicKeyAuth(s.PublicKeyHandler),
 		wish.WithMiddleware(mw...),
 	}
-	s.srv, err = wish.NewServer(opts...)
-	if err != nil {
-		return nil, err
+	s.srv = &ssh.Server{}
+	for _, op := range opts {
+		if err := s.srv.SetOption(op); err != nil {
+			return nil, err
+		}
 	}
 	return s, nil
 }

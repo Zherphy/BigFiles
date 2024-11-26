@@ -87,7 +87,7 @@ func gitRunE(cmd *cobra.Command, args []string) error {
 
 func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 	pk1 := sshutils.PublicKeyFromContext(ctx)
-	log.Printf("处理git-lfs-authenticate /n")
+	log.Printf("处理git-lfs-authenticate")
 	server := sshutils.SSHServerFromContext(ctx)
 	log.Printf(server.Addr)
 	//给gitee发送ssh认证

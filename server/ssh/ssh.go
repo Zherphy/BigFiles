@@ -3,13 +3,14 @@ package ssh
 import (
 	"context"
 	"errors"
+	"log"
+	"net"
+
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"net"
 )
 
 var (
@@ -37,6 +38,7 @@ func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 
 	opts := []ssh.Option{
 		ssh.PublicKeyAuth(s.PublicKeyHandler),
+		ssh.PasswordAuth(s.PasswordAuthHandler),
 		wish.WithMiddleware(mw...),
 	}
 	s.srv = &ssh.Server{}
@@ -78,9 +80,14 @@ func (s *SSHServer) Start() error {
 
 // PublicKeyAuthHandler handles public key authentication.
 func (s *SSHServer) PublicKeyHandler(ctx ssh.Context, pk ssh.PublicKey) (allowed bool) {
+	log.Println(pk)
 	if pk == nil {
 		return false
 	}
 
+	return true
+}
+
+func (s *SSHServer) PasswordAuthHandler(ctx ssh.Context, password string) (allowed bool) {
 	return true
 }

@@ -1,10 +1,15 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
+	"io/ioutil"
+	"net"
+	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -87,16 +92,34 @@ func gitRunE(cmd *cobra.Command, args []string) error {
 
 func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 	pk1 := sshutils.PublicKeyFromContext(ctx)
-	log.Printf("处理git-lfs-authenticate")
+	// Set the public key fingerprint to be used for authentication.
+	a := ssh.FingerprintSHA256(pk1)
+	log.Printf("处理git-lfs-authenticate: %v", a)
 	server := sshutils.SSHServerFromContext(ctx)
 	log.Printf(server.Addr)
 	//给gitee发送ssh认证
 	cfg := &ssh.ClientConfig{
 		User: "git",
+		// Config: c,
 		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(server.HostSigners[0]),
+			// ssh.PublicKeys(server.HostSigners[0]),
+			ssh.PublicKeys(generateSigner()),
 		},
-		HostKeyCallback: ssh.FixedHostKey(pk1),
+		// HostKeyCallback: ssh.FixedHostKey(pk1),
+		// verify host public key
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
+		},
+		// optional host key algo list
+		HostKeyAlgorithms: []string{
+			ssh.KeyAlgoRSA,
+			ssh.KeyAlgoDSA,
+			ssh.KeyAlgoECDSA256,
+			ssh.KeyAlgoECDSA384,
+			ssh.KeyAlgoECDSA521,
+			ssh.KeyAlgoED25519,
+		},
+		Timeout: 4 * time.Minute,
 	}
 	client, err := ssh.Dial("tcp", "gitee.com:22", cfg)
 	if err != nil {
@@ -110,31 +133,50 @@ func (s Service) Handler(ctx context.Context, cmd ServiceCommand) error {
 		}
 	}(client)
 
-	// //创建一个SSH会话
-	// session, err := client.NewSession()
-	// if err != nil {
-	// 	log.Printf("failed to create session: %v", err)
-	// }
-	// defer func(session *ssh.Session) {
-	// 	err := session.Close()
-	// 	if err != nil {
-	// 		log.Printf("failed to close session: %v", err)
-	// 	}
-	// }(session)
+	//创建一个SSH会话
+	session, err := client.NewSession()
+	if err != nil {
+		log.Printf("failed to create session: %v", err)
+	}
+	defer func(session *ssh.Session) {
+		err := session.Close()
+		if err != nil {
+			log.Printf("failed to close session: %v", err)
+		}
+	}(session)
 
-	// // 设置会话的标准输出和标准错误输出为字节缓冲区，以便获取命令执行结果
-	// var stdoutBuf bytes.Buffer
-	// var stderrBuf bytes.Buffer
-	// session.Stdout = &stdoutBuf
-	// session.Stderr = &stderrBuf
+	// 设置会话的标准输出和标准错误输出为字节缓冲区，以便获取命令执行结果
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
+	session.Stdout = &stdoutBuf
+	session.Stderr = &stderrBuf
 
-	// // 执行指定的指令
-	// err = session.Run("git-lfs-authenticate wj00037/lfs-test.git download")
-	// if err != nil {
-	// 	log.Printf("命令执行出错: %v", err)
-	// 	log.Printf("标准错误输出: %s", stderrBuf.String())
-	// }
-	// // 输出命令执行的标准输出结果
-	// log.Printf("标准输出: %s", stdoutBuf.String())
+	// 执行指定的指令
+	err = session.Run("git-lfs-authenticate wj00037/lfs-test.git download")
+	if err != nil {
+		log.Printf("命令执行出错: %v", err)
+		log.Printf("标准错误输出: %s", stderrBuf.String())
+	}
+	// 输出命令执行的标准输出结果
+	log.Printf("标准输出: %s", stdoutBuf.String())
+	cmd.Stderr.Write([]byte(stdoutBuf.String()))
 	return nil
+}
+
+func generateSigner() ssh.Signer {
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return nil
+	}
+	b := path.Join(homePath, ".ssh", "id_ed25519")
+	key, err := ioutil.ReadFile(b)
+	if err != nil {
+		log.Fatal("ssh 密钥文件读取失败", err)
+	}
+	// Create the Signer for this private key.
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		log.Fatal("ssh 关键签名失败", err)
+	}
+	return signer
 }

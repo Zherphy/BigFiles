@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/metalogical/BigFiles/server/ssh"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/metalogical/BigFiles/server/ssh"
 
 	"github.com/metalogical/BigFiles/auth"
 	"github.com/metalogical/BigFiles/config"
@@ -141,6 +142,7 @@ func main() {
 		doneOnce()
 	}()
 
+	// ssh.NewSSHTunnel().Start()
 	log.Println("serving on http://0.0.0.0:5000 ...")
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalln(err)

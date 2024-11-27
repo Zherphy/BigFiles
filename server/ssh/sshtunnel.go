@@ -2,8 +2,6 @@ package ssh
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"log"
 	"math"
@@ -11,6 +9,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type SSHTunnel struct {
@@ -32,7 +33,7 @@ func (st *SSHTunnel) Start() {
 	st.initSSHClient()
 	t := Tunnel{
 		Remote: "gitee.com:22",
-		Local:  "127.0.0.1:23231",
+		Local:  "127.0.0.1:2323",
 	}
 	go st.connect(t)
 }
@@ -49,7 +50,7 @@ func (st *SSHTunnel) GetSSHClient() (*ssh.Client, error) {
 	}
 	var auth []ssh.AuthMethod
 	auth = make([]ssh.AuthMethod, 0)
-	auth = append(auth, ssh.Password(""))
+	auth = append(auth, ssh.Password("SB5Ol5QH8z5KeFtMKL3kZg=="))
 
 	sc := &ssh.ClientConfig{
 		User: "root",

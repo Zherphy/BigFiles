@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net"
+	"os"
+	"path"
 
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
@@ -36,9 +38,13 @@ func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 		CommandMiddleware,
 	}
 
+	homePath, _ := os.UserHomeDir()
+	b := path.Join(homePath, ".ssh", "id_rsa")
+
 	opts := []ssh.Option{
 		ssh.PublicKeyAuth(s.PublicKeyHandler),
 		ssh.PasswordAuth(s.PasswordAuthHandler),
+		ssh.HostKeyFile(b),
 		wish.WithMiddleware(mw...),
 	}
 	s.srv = &ssh.Server{}

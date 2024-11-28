@@ -142,7 +142,6 @@ func main() {
 		doneOnce()
 	}()
 
-	// ssh.NewSSHTunnel().Start()
 	log.Println("serving on http://0.0.0.0:5000 ...")
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalln(err)

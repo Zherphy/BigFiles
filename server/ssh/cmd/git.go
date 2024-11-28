@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -169,7 +168,7 @@ func generateSigner() ssh.Signer {
 		return nil
 	}
 	b := path.Join(homePath, ".ssh", "id_ed25519")
-	key, err := ioutil.ReadFile(b)
+	key, err := os.ReadFile(b)
 	if err != nil {
 		log.Fatal("ssh 密钥文件读取失败", err)
 	}

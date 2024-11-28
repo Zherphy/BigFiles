@@ -3,9 +3,9 @@ package ssh
 import (
 	"context"
 	"errors"
+	gossh "golang.org/x/crypto/ssh"
 	"log"
 	"net"
-	"os"
 	"path"
 
 	"github.com/charmbracelet/ssh"
@@ -38,8 +38,8 @@ func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 		CommandMiddleware,
 	}
 
-	homePath, _ := os.UserHomeDir()
-	b := path.Join(homePath, ".ssh", "id_rsa")
+	//homePath, _ := os.UserHomeDir()
+	b := path.Join("etc", "BigFiles", "id_rsa")
 
 	opts := []ssh.Option{
 		ssh.PublicKeyAuth(s.PublicKeyHandler),
@@ -52,6 +52,9 @@ func NerSSHServer(ctx context.Context) (*SSHServer, error) {
 		if err := s.srv.SetOption(op); err != nil {
 			return nil, err
 		}
+	}
+	s.srv.RequestHandlers = map[string]ssh.RequestHandler{
+		"testHandler": s.RequestHandler,
 	}
 	return s, nil
 }
@@ -96,4 +99,8 @@ func (s *SSHServer) PublicKeyHandler(ctx ssh.Context, pk ssh.PublicKey) (allowed
 
 func (s *SSHServer) PasswordAuthHandler(ctx ssh.Context, password string) (allowed bool) {
 	return true
+}
+
+func (s *SSHServer) RequestHandler(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+	return true, nil
 }

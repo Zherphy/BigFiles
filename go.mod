@@ -9,7 +9,6 @@ require (
 	github.com/charmbracelet/ssh v0.0.0-20240725163421-eb71b85b27aa
 	github.com/charmbracelet/wish v1.4.3
 	github.com/go-chi/chi v4.1.2+incompatible
-	github.com/minio/minio-go/v7 v7.0.77
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/sync v0.8.0
